@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Dio，love you</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0d1117;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        .note {
+            position: absolute;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            color: #fff;
+            cursor: move;
+            user-select: none;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.5s ease;
+        }
+        .note.animate-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .note:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 便签文字内容
+        const noteTexts = [
+            "好好吃饭","好好爱自己","保持好心情","多喝热水~",
+            "我想你了","别熬夜","天冷了多穿衣服","顺顺利利",
+            "一直想着你","每天都开心","岁岁平安","万事顺心",
+            "自在安然","平安喜乐","来日方长"
+        ];
+
+        // 便签颜色
+        const noteColors = [
+            "#ff748c","#ff96b4","#ffb3c1","#ffc2d1",
+            "#87cefa","#98fb98","#ffd782","#dda0dd",
+            "#f4acb7","#bde0fe","#ffd6a5","#caffbf",
+            "#90e0ef","#ffb703","#fb8500"
+        ];
+
+        // 爱心形状的坐标点（基于屏幕比例调整）
+        function getHeartPoints(centerX, centerY, size) {
+            const points = [];
+            for (let t = 0; t < Math.PI * 2; t += 0.01) {
+                const x = centerX + size * 16 * Math.sin(t) ** 3;
+                const y = centerY - size * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                points.push({ x, y });
+            }
+            return points;
+        }
+
+        // 创建便签
+        function createNote(text, x, y, color, delay) {
+            const note = document.createElement("div");
+            note.className = "note";
+            note.style.left = `${x}px`;
+            note.style.top = `${y}px`;
+            note.style.backgroundColor = color;
+            note.textContent = text;
+
+            // 延迟显示动画
+            setTimeout(() => {
+                note.classList.add("animate-in");
+            }, delay);
+
+            // 使便签可拖动
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            note.addEventListener("mousedown", (e) => {
+                isDragging = true;
+                offsetX = e.clientX - note.getBoundingClientRect().left;
+                offsetY = e.clientY - note.getBoundingClientRect().top;
+                note.style.zIndex = 999;
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (isDragging) {
+                    note.style.left = `${e.clientX - offsetX}px`;
+                    note.style.top = `${e.clientY - offsetY}px`;
+                }
+            });
+
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+                note.style.zIndex = 1;
+            });
+
+            // 移动端触摸事件
+            note.addEventListener("touchstart", (e) => {
+                isDragging = true;
+                const touch = e.touches[0];
+                offsetX = touch.clientX - note.getBoundingClientRect().left;
+                offsetY = touch.clientY - note.getBoundingClientRect().top;
+                note.style.zIndex = 999;
+                e.preventDefault();
+            });
+
+            document.addEventListener("touchmove", (e) => {
+                if (isDragging) {
+                    const touch = e.touches[0];
+                    note.style.left = `${touch.clientX - offsetX}px`;
+                    note.style.top = `${touch.clientY - offsetY}px`;
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener("touchend", () => {
+                isDragging = false;
+                note.style.zIndex = 1;
+            });
+
+            document.body.appendChild(note);
+            return note;
+        }
+
+        // 初始化爱心便签
+        function initHeartNotes() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const size = Math.min(window.innerWidth, window.innerHeight) / 100;
+            const points = getHeartPoints(centerX, centerY, size);
+            const notes = [];
+
+            // 生成爱心形状的便签，两秒内依次出现
+            for (let i = 0; i < points.length; i++) {
+                const text = noteTexts[i % noteTexts.length];
+                const color = noteColors[i % noteColors.length];
+                const delay = (i / points.length) * 2000; // 两秒内依次出现
+                const note = createNote(text, points[i].x, points[i].y, color, delay);
+                notes.push(note);
+            }
+
+            // 停留一秒后，随机分布到屏幕内
+            setTimeout(() => {
+                notes.forEach(note => {
+                    const randomX = Math.random() * (window.innerWidth - 100);
+                    const randomY = Math.random() * (window.innerHeight - 50);
+                    note.style.left = `${randomX}px`;
+                    note.style.top = `${randomY}px`;
+                    note.style.transition = "all 3s ease"; // 三秒完成随机分布
+                });
+            }, 3000); // 爱心停留一秒（2000+1000）
+        }
+
+        // 窗口大小变化时重新绘制
+        window.addEventListener("resize", () => {
+            document.body.innerHTML = "";
+            initHeartNotes();
+        });
+
+        // 页面加载完成后初始化
+        window.addEventListener("load", initHeartNotes);
+    </script>
+</body>
+</html>
